@@ -10,16 +10,25 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.*;
 import java.util.Date;
+import java.util.List;
 import java.text.SimpleDateFormat;
+import java.util.stream.Collectors;
+
+import com.gerardo_steven.models.User;
+import com.gerardo_steven.controllers.NotificationController;
 
 @RestController
 @EnableAutoConfiguration
 @SpringBootApplication
 public class RestApiApp {
 
-    private static final String LOG_FILE_PATH = "messages_log.txt";
+    public static void main(String[] args) throws Exception{
+        SpringApplication.run(RestApiApp.class, args);
+    }
 
     @PostMapping("/send")
     public ResponseEntity<ApiResponse> sendMessage(@Validated @RequestBody RequestData requestData, BindingResult bindingResult) {
@@ -27,25 +36,46 @@ public class RestApiApp {
         String category = requestData.getCategory();
         String message = requestData.getMessage();
         
-        if(!category.equals("SMS") && !category.equals("Email") && !category.equals("Push")){ // Wrong request body
-            String errorMessage = "Wrong request body. Invalid 'category' parameter, it should be either 'SMS', 'Email' or 'Push'";
+        if(!category.equals("sports") && !category.equals("finance") && !category.equals("films")){ // Invalid category parameter
+            String errorMessage = "Wrong request body. Invalid 'category' parameter, it should be either 'sports', 'finance' or 'films'";
+            return ResponseEntity.badRequest().body(new ApiResponse(errorMessage));
+        }
+
+        if( message.equals("") ){ // Invalid message parameter
+            String errorMessage = "Wrong request body. 'message' parameter is required";
             return ResponseEntity.badRequest().body(new ApiResponse(errorMessage));
         }
 
 
-        String response = "Message of type " + category + " was successfully sent";
-        
-        // Persists the message in a log file
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-        String log = "[" + timeStamp + "] - " + category + " to be sent: " + message;
-        writeLog(log);
+        // Gets list of users subscribed to the given category - Emulates a Database extraction from a JSON-based DB
+        ObjectMapper objectMapper = new ObjectMapper();
+        try{
+             List<User> users = objectMapper.readValue(new File("users.json"), new TypeReference<List<User>>() {});
 
-        return ResponseEntity.ok(new ApiResponse(response));
+             // Filters users subscribed to the given category 
+             List<User> filteredUsers = users.stream()
+                    .filter(user -> user.getSubscribedTopics() != null && user.isSubscribedToTopic(category))
+                    .collect(Collectors.toList());
+
+             for(User user : filteredUsers) {
+                NotificationController.sendNotification(user, message);
+             }
+
+             return ResponseEntity.ok(new ApiResponse("Message sent successfully"));
+
+        } catch (IOException exception) { // Handle errores when processing
+            try{
+                PrintStream ps = new PrintStream(new FileOutputStream("errors.log", true));
+                exception.printStackTrace(ps);
+                ps.close();
+            }catch(FileNotFoundException fileException){
+                fileException.printStackTrace();
+            }finally{
+                return ResponseEntity.internalServerError().body(new ApiResponse("Error processing your request."));
+            }
+        }
     }
 
-    public static void main(String[] args) throws Exception{
-        SpringApplication.run(RestApiApp.class, args);
-    }
 
     // Class for mapping input JSON
     static class RequestData {
@@ -84,19 +114,6 @@ public class RestApiApp {
 
         public void setResponse(String response) {
             this.response = response;
-        }
-    }
-
-
-    // Method used to log messages into a static file 
-    private static void writeLog(String message) {
-        try {
-            FileWriter fileWriter = new FileWriter(LOG_FILE_PATH, true);
-            PrintWriter printWriter = new PrintWriter(fileWriter);
-            printWriter.println(message);
-            printWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

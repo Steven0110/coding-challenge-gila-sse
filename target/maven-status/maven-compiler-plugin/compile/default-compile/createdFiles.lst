@@ -1,2 +1,5 @@
+com\gerardo_steven\controllers\NotificationController.class
 com\gerardo_steven\RestApiApp$RequestData.class
 com\gerardo_steven\RestApiApp$ApiResponse.class
+com\gerardo_steven\models\User.class
+com\gerardo_steven\RestApiApp$1.class
