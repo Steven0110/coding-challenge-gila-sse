@@ -261,7 +261,7 @@ java.lang.Exception
 	[...]
 ```
 
-## Usage
+## Test
 Unit Tests have been implemented in the application, currently there are 6 configured unit tests (2 per service: 1 for success and 1 simulated failure when sending a message). To run them, please execute the following command:
 
 ```bash
