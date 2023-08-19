@@ -9,17 +9,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.*;
 import java.util.Date;
 import java.util.List;
-import java.text.SimpleDateFormat;
-import java.util.stream.Collectors;
 
 import com.gerardo_steven.models.User;
-import com.gerardo_steven.controllers.NotificationController;
+import com.gerardo_steven.models.ApiResponse;
+import com.gerardo_steven.models.RequestData;
+import com.gerardo_steven.services.*;
 
 @RestController
 @EnableAutoConfiguration
@@ -31,7 +28,7 @@ public class RestApiApp {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<ApiResponse> sendMessage(@Validated @RequestBody RequestData requestData, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse> sendMessage(@Validated @RequestBody RequestData requestData) {
         
         String category = requestData.getCategory();
         String message = requestData.getMessage();
@@ -48,72 +45,15 @@ public class RestApiApp {
 
 
         // Gets list of users subscribed to the given category - Emulates a Database extraction from a JSON-based DB
-        ObjectMapper objectMapper = new ObjectMapper();
-        try{
-             List<User> users = objectMapper.readValue(new File("users.json"), new TypeReference<List<User>>() {});
+        UserService userService = new UserService();
+        List<User> filteredUsers = userService.getUsersSubscribedToCategory(category); //Simulates DB extraction
 
-             // Filters users subscribed to the given category 
-             List<User> filteredUsers = users.stream()
-                    .filter(user -> user.getSubscribedTopics() != null && user.isSubscribedToTopic(category))
-                    .collect(Collectors.toList());
+        NotificationController notificationController = new NotificationController();
+        int errors = notificationController.sendNotifications(filteredUsers, message);
 
-             for(User user : filteredUsers) {
-                NotificationController.sendNotification(user, message);
-             }
-
-             return ResponseEntity.ok(new ApiResponse("Message sent successfully"));
-
-        } catch (IOException exception) { // Handle errores when processing
-            try{
-                PrintStream ps = new PrintStream(new FileOutputStream("errors.log", true));
-                exception.printStackTrace(ps);
-                ps.close();
-            }catch(FileNotFoundException fileException){
-                fileException.printStackTrace();
-            }finally{
-                return ResponseEntity.internalServerError().body(new ApiResponse("Error processing your request."));
-            }
-        }
-    }
-
-
-    // Class for mapping input JSON
-    static class RequestData {
-
-        private String category;
-        private String message;
-
-        public String getCategory() {
-            return category;
-        }
-
-        public void setCategory(String category) {
-            this.category = category;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-    }
-
-    // Class for mapping output JSON
-    static class ApiResponse {
-        private String response;
-
-        public ApiResponse(String response) {
-            this.response = response;
-        }
-
-        public String getResponse() {
-            return response;
-        }
-
-        public void setResponse(String response) {
-            this.response = response;
-        }
+        if( errors == 0)
+            return ResponseEntity.ok(new ApiResponse("Message sent successfully to all subscribers' channels"));
+        else
+            return ResponseEntity.ok(new ApiResponse("Message sent successfully to all subscribers' channels except " + errors));
     }
 }

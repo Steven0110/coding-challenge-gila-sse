@@ -1,0 +1,54 @@
+[
+	{
+		"id": "1",
+		"name": "John Doe",
+		"email": "john@challenge.com",
+		"phone": "+525512341234",
+		"deviceToken": "eX3wek3xL18:APA91bGc4zkrENir9Tb-o4tDWLVK_G-0O7XfDvcJ-6-EXAMPLE_TOKEN_Here-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+		"subscribed": ["sports", "finance", "films"],
+		"channels": ["sms", "email", "push"]
+	},
+	{
+		"id": "2",
+		"name": "Sarah Smith",
+		"email": "sarah@challenge.com",
+		"phone": "+525512341239",
+		"deviceToken": "eX3wek3xL18:APA91bGc4zkrENir9Tb-o4tDWLVK_G-0O7XfDvcJ-6-EXAMPLE_TOKEN_Here-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+		"subscribed": ["sports"],
+		"channels": ["sms", "push"]
+	},
+	{
+		"id": "3",
+		"name": "Peter Park",
+		"email": "peter@challenge.com",
+		"phone": "+525512343421",
+		"deviceToken": "eX3wek3xL18:APA91bGc4zkrENir9Tb-o4tDWLVK_G-0O7XfDvcJ-6-EXAMPLE_TOKEN_Here-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+		"subscribed": ["sports", "films"],
+		"channels": ["email", "push"]
+	},
+	{
+		"id": "4",
+		"name": "Andrew Gary",
+		"email": "andrew@challenge.com",
+		"phone": "+525512341235",
+		"subscribed": ["finance", "films"],
+		"channels": ["sms"]
+	},
+	{
+		"id": "5",
+		"name": "John Doe",
+		"email": "demo@challenge.com",
+		"phone": "+525512341238",
+		"deviceToken": "eX3wek3xL18:APA91bGc4zkrENir9Tb-o4tDWLVK_G-0O7XfDvcJ-6-EXAMPLE_TOKEN_Here-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+		"subscribed": ["sports", "finance", "films"],
+		"channels": ["sms", "email", "push"]
+	},
+	{
+		"id": "6",
+		"name": "Matt Gibson",
+		"email": "matt@challenge.com",
+		"phone": "+525512341231",
+		"subscribed": ["films"],
+		"channels": ["email"]
+	}
+]

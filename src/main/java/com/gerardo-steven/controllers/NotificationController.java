@@ -1,61 +1,58 @@
-package com.gerardo_steven.controllers;
+package com.gerardo_steven.services;
 
-import java.io.PrintWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.stream.Collectors;
-
-import java.text.SimpleDateFormat;
+import org.springframework.stereotype.Service;
+import java.util.List;
 import com.gerardo_steven.models.User;
+import com.gerardo_steven.services.*;
+import com.gerardo_steven.NotificationException;
 
+@Service
 public class NotificationController {
 
-    private static final String LOG_FILE_PATH = "messages_log.txt";
+    private SmsNotificationService smsService;
+    private EmailNotificationService emailService;
+    private PushNotificationService pushService;
 
-	public static void sendNotification(User user, String message) {
-		if( user.hasSMS() )
-			sendSMS(user.getPhone(), message);
+    public NotificationController() {
+        this.smsService = new SmsNotificationService();
+        this.emailService = new EmailNotificationService();
+        this.pushService = new PushNotificationService();
+    }
 
-		if( user.hasEmail() )
-			sendEmail(user.getEmail(), message);
-
-		if( user.hasPush() )
-			sendPush(user.getDeviceToken(), message);
-	}
-
-	public static void sendSMS(String phone, String message) {
-
-        // Persists the message in a log file
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-        String log = "[" + timeStamp + "] - SMS message sent to " + phone + " => " + message;
-        writeLog(log);
-	}
-
-	public static void sendEmail(String email, String message) {
-
-        // Persists the message in a log file
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-        String log = "[" + timeStamp + "] - Email message sent to " + email + " => " + message;
-        writeLog(log);
-	}
-
-	public static void sendPush(String deviceToken, String message) {
-        // Persists the message in a log file
-        String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-        String log = "[" + timeStamp + "] - Push message sent to " + deviceToken + " => " + message;
-        writeLog(log);
-
-	}
-
-    // Method used to log sent messages 
-    public static void writeLog(String log) {
-        try {
-            FileWriter fileWriter = new FileWriter(LOG_FILE_PATH, true);
-            PrintWriter printWriter = new PrintWriter(fileWriter);
-            printWriter.println(log);
-            printWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public int sendNotifications(List<User> users, String message) {
+        int errors = 0;
+        for (User user : users) {
+            errors += sendNotificationForUser(user, message); //Count all messages which failed to be sent
         }
+
+        return errors;
+    }
+
+    private int sendNotificationForUser(User user, String message){
+        int errors = 0;
+
+        if (user.hasSMS()) {
+            try{
+                smsService.sendNotification(user.getPhone(), message);
+            }catch(NotificationException e){
+                errors++;
+            }
+        }
+        if (user.hasEmail()) {
+            try{
+                emailService.sendNotification(user.getEmail(), message);
+            }catch(NotificationException e){
+                errors++;
+            }
+        }
+        if (user.hasPush()) {
+            try{
+                pushService.sendNotification(user.getDeviceToken(), message);
+            }catch(NotificationException e){
+                errors++;
+            }
+        }
+
+        return errors;
     }
 }
