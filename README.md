@@ -178,9 +178,25 @@ Use any tool to manage Requests like Postman, or use any cURL based library to m
 
 	Response:
 	{
-    	"response": "Message sent successfully"
+   	"response": "Message sent successfully to all subscribers' channels"
 	}
 ```
+
+```http
+   POST http://localhost:8080/send
+   Content-Type: application/json
+   Body:
+   {
+	    "category": "sports",
+	    "message": "This is a Sports message"
+	}
+
+	Response:
+	{
+   	"response": "Message sent successfully to all subscribers' channels except 1"
+	}
+```
+*NOTE: This last request had a simulated error, since currently there's not any connection with an external messaging provider*
 
 ```http
    POST http://localhost:8080/send
@@ -212,13 +228,94 @@ Use any tool to manage Requests like Postman, or use any cURL based library to m
 	}
 ```
 
-All the messages sent will be logged in the 'messages_log.txt' file in the root of the project
+## Logging
 
-This is an example of the log file:
+### Sent messages
+
+All the messages "sent" will be logged in the *messages_log.txt* file in the *src/main/log* folder of the project
+
+This is an example of the *messages_log.txt* log file:
 
 ```bash
 [2023.08.17.08.44.18] - SMS message sent to +525512341234 => This is a Sports message
 [2023.08.17.08.44.18] - Email message sent to john@challenge.com => This is a Sports message
 [2023.08.17.08.44.18] - Push message sent to eX3wek3xL18:APA91bGc4zkrENir9Tb-o4tDWLVK_G-0O7XfDvcJ-6-EXAMPLE_TOKEN_Here-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef => This is a Sports message
 [2023.08.17.08.44.18] - SMS message sent to +525512341239 => This is a Sports message
+```
+### Unsent messages
+
+Inside *src/main/log* there will be a *errors.log* log file containing logs regarding notifications which failed to be sent. If for some reason, a message couldn't be sent, it just logs it into this file to keep track of it, and continues sending the remaining notifications.
+
+Each message failure will be logged in a two-blocks log, one block with a descriptive message, and one block with the stack trace for debugging purposes:
+```bash
+{General Message}
+{Stack trace}
+```
+This is an example of the content of *errors.log* file:
+```bash
+Error sending SMS notification to +525512341234
+java.lang.Exception
+	at com.gerardo_steven.services.SmsNotificationService.sendNotification(SmsNotificationService.java:21)
+	at com.gerardo_steven.services.NotificationController.sendNotificationForUser(NotificationController.java:31)
+	at com.gerardo_steven.services.NotificationController.sendNotifications(NotificationController.java:24)
+	[...]
+```
+
+## Usage
+Unit Tests have been implemented in the application, currently there are 6 configured unit tests (2 per service: 1 for success and 1 simulated failure when sending a message). To run them, please execute the following command:
+
+```bash
+mvn test
+
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ----------------< com.gerardo_steven:coding-challenge >-----------------
+[INFO] Building coding-challenge 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ coding-challenge ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO]
+[INFO] --- compiler:3.11.0:compile (default-compile) @ coding-challenge ---
+[INFO] Changes detected - recompiling the module! :source
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 11 source files with javac [debug target 1.8] to target\classes
+[WARNING] bootstrap class path not set in conjunction with -source 8
+[INFO]
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ coding-challenge ---
+[WARNING] Using platform encoding (UTF-8 actually) to copy filtered resources, i.e. build is platform dependent!
+[INFO] skip non existing resourceDirectory D:\elife\dev\coding-challenge-gila-sse\src\test\resources
+[INFO]
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ coding-challenge ---
+[INFO] Changes detected - recompiling the module! :dependency
+[WARNING] File encoding has not been set, using platform encoding UTF-8, i.e. build is platform dependent!
+[INFO] Compiling 4 source files with javac [debug target 1.8] to target\test-classes
+[WARNING] bootstrap class path not set in conjunction with -source 8
+[INFO]
+[INFO] --- surefire:3.1.2:test (default-test) @ coding-challenge ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.gerardo_steven.services.EmailNotificationServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.416 s -- in com.gerardo_steven.services.EmailNotificationServiceTest
+[INFO] Running com.gerardo_steven.services.PushNotificationServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s -- in com.gerardo_steven.services.PushNotificationServiceTest
+[INFO] Running com.gerardo_steven.services.SmsNotificationServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.032 s -- in com.gerardo_steven.services.SmsNotificationServiceTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.595 s
+[INFO] Finished at: 2023-08-19T14:13:27-06:00
+[INFO] ------------------------------------------------------------------------
+
 ```
